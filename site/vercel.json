@@ -1,11 +1,5 @@
 {
-  "redirects": [
-    {
-      "source": "/admin",
-      "destination": "/admin/",
-      "permanent": true
-    }
-  ],
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/keepalive",

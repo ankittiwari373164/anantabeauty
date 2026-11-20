@@ -33,7 +33,7 @@
       '<label class="l">Email<input class="field" type="email" name="email" required autocomplete="username"></label>' +
       '<label class="l">Password<input class="field" type="password" name="password" required autocomplete="current-password"></label>' +
       '<div class="err" id="a-err" role="alert">' + esc(msg || '') + '</div><button class="btn" type="submit">Sign in</button>' +
-      '<p class="muted" style="font-size:.85rem;margin:0"><a href="../index.html">Back to the storefront</a></p></form></main>';
+      '<p class="muted" style="font-size:.85rem;margin:0"><a href="/">Back to the storefront</a></p></form></main>';
     $('#a-login').addEventListener('submit', async function (e) {
       e.preventDefault();
       var r = await api('POST', '/auth/login', { email: e.target.email.value.trim(), password: e.target.password.value });
@@ -45,7 +45,7 @@
 
   function shell(active, inner) {
     var items = [['overview', 'Overview'], ['orders', 'Orders'], ['products', 'Products'], ['coupons', 'Coupons'], ['customers', 'Customers'], ['messages', 'Messages'], ['policies', 'Policies'], ['settings', 'Settings']];
-    root.innerHTML = '<div class="admin"><aside><a class="brand" href="../index.html" style="margin-bottom:6px"><img src="../img/logo.png" alt="" width="40" height="40" style="background:#fff"><span><b>Ananta</b><small>Admin</small></span></a>' +
+    root.innerHTML = '<div class="admin"><aside><a class="brand" href="/" style="margin-bottom:6px"><img src="/img/logo.png" alt="" width="40" height="40" style="background:#fff"><span><b>Ananta</b><small>Admin</small></span></a>' +
       '<nav aria-label="Admin sections">' + items.map(function (i) { return '<button type="button" data-t="' + i[0] + '"' + (i[0] === active ? ' aria-current="true"' : '') + '>' + i[1] + '</button>'; }).join('') + '<button type="button" id="a-out" style="margin-top:14px;opacity:.8">Sign out</button></nav>' +
       '</aside>' +
       '<main id="a-main">' + inner + '</main></div><div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="box" id="m-box"></div></div>';
@@ -301,7 +301,7 @@
       list.map(function (p) {
         return '<details class="card" style="padding:18px 22px;margin-bottom:12px"' + '' + '><summary style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:12px;align-items:center"><span>' + esc(p.title) + '</span>' + statusPill(String(p.body || '').trim() ? 'published' : 'empty') + '</summary>' +
           '<form class="pf" data-slug="' + esc(p.slug) + '" style="margin-top:14px"><label class="l">Text (blank lines start a new paragraph)<textarea class="field" name="body" rows="12" style="font-family:inherit">' + esc(p.body) + '</textarea></label>' +
-          '<div class="buy-row" style="margin-top:12px"><button class="btn small" type="submit">Save ' + esc(p.title.toLowerCase()) + '</button><a class="linkbtn" href="../policy.html?p=' + esc(p.slug) + '" target="_blank" rel="noopener">View page</a>' + (p.updatedAt ? '<span class="muted" style="font-size:.85rem">Saved ' + fmtDT(p.updatedAt) + '</span>' : '') + '</div></form></details>';
+          '<div class="buy-row" style="margin-top:12px"><button class="btn small" type="submit">Save ' + esc(p.title.toLowerCase()) + '</button><a class="linkbtn" href="/policy?p=' + esc(p.slug) + '" target="_blank" rel="noopener">View page</a>' + (p.updatedAt ? '<span class="muted" style="font-size:.85rem">Saved ' + fmtDT(p.updatedAt) + '</span>' : '') + '</div></form></details>';
       }).join(''));
     $$('form.pf').forEach(function (f) {
       f.addEventListener('submit', async function (e) {

@@ -19,7 +19,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function rupees(n) { return '\u20B9' + (Math.round(Number(n) * 100) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
   function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
-  function page() { return (location.pathname.split('/').pop() || 'index.html').replace('.html', '') || 'index'; }
+  function page() { return (location.pathname.replace(/\/+$/, '').split('/').pop() || 'index').replace('.html', '') || 'index'; }
 
   function toast(msg) {
     var t = $('#toast'); if (!t) return;
@@ -179,7 +179,7 @@
     var cur = page();
     var tb = document.createElement('nav');
     tb.className = 'tabbar'; tb.setAttribute('aria-label', 'App sections');
-    var tabs = [['home', 'Home', 'index.html'], ['shop', 'Shop', 'shop.html'], ['bag', 'Bag', '#'], ['account', 'Account', 'dashboard.html']];
+    var tabs = [['home', 'Home', '/'], ['shop', 'Shop', '/shop'], ['bag', 'Bag', '#'], ['account', 'Account', '/dashboard']];
     tb.innerHTML = tabs.map(function (t) {
       var active = (t[0] === 'home' && cur === 'index') || (t[0] === 'shop' && (cur === 'shop' || cur === 'product')) || (t[0] === 'account' && (cur === 'dashboard' || cur === 'login'));
       var inner = ICONS[t[0]] + '<span>' + t[1] + (t[0] === 'bag' ? ' <b class="tab-count" id="tab-count">0</b>' : '') + '</span>';
@@ -217,7 +217,7 @@
     if (!sheet || !body) return;
     var cart = getCart();
     if (!cart.length) {
-      body.innerHTML = '<p class="muted">Your bag is empty.</p><a class="btn" href="shop.html">Go to the shop</a>';
+      body.innerHTML = '<p class="muted">Your bag is empty.</p><a class="btn" href="/shop">Go to the shop</a>';
     } else {
       body.innerHTML = '<div class="empty" style="padding:18px 0">Checking your bag&hellip;</div>';
       var coupon = localStorage.getItem(KEY_COUPON) || '';
@@ -228,7 +228,7 @@
       }).join('');
       body.innerHTML = lines + '<div class="sheet-totals">' + totalsHtml(q) + '</div>' +
         (q.couponMessage ? '<p class="muted" style="font-size:.9rem">' + esc(q.couponMessage) + '</p>' : '') +
-        '<div class="sheet-actions"><a class="btn" href="checkout.html">Checkout</a><a class="btn ghost" href="cart.html">View bag</a></div>';
+        '<div class="sheet-actions"><a class="btn" href="/checkout">Checkout</a><a class="btn ghost" href="/cart">View bag</a></div>';
     }
     sheet.classList.add('open'); document.body.classList.add('sheet-open');
   }
@@ -241,19 +241,19 @@
   async function renderPolicy() {
     var root = $('#policy'), slug = qs('p') || 'privacy';
     var r = await api('GET', '/policies/' + encodeURIComponent(slug));
-    if (r.status !== 200) { root.innerHTML = '<div class="empty">We could not find that policy. <a href="policy.html?p=privacy">Read the privacy policy</a>.</div>'; return; }
+    if (r.status !== 200) { root.innerHTML = '<div class="empty">We could not find that policy. <a href="/policy?p=privacy">Read the privacy policy</a>.</div>'; return; }
     var pol = r.body.policy;
     document.title = pol.title + ' | Ananta Beauty';
     $('#crumb') && ($('#crumb').textContent = pol.title);
     var paras = String(pol.body || '').split(/\n\s*\n/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('');
     root.innerHTML = '<span class="eyebrow">Policies</span><h1>' + esc(pol.title) + '</h1>' +
       (String(pol.body || '').trim() ? '<div class="policy-body">' + paras + '</div>' :
-        '<div class="policy-body"><p>This policy is being updated. For any question about it, <a href="contact.html">contact us</a> and we will answer directly.</p></div>') +
+        '<div class="policy-body"><p>This policy is being updated. For any question about it, <a href="/contact">contact us</a> and we will answer directly.</p></div>') +
       '<p class="muted" style="font-size:.88rem;margin-top:26px">Last updated: ' + (pol.updatedAt ? new Date(pol.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : 'not yet published') + '</p>';
     var links = ['privacy', 'terms', 'shipping', 'returns', 'refund'];
     var titles = { privacy: 'Privacy', terms: 'Terms', shipping: 'Shipping', returns: 'Returns', refund: 'Refunds' };
     var more = $('#policy-links');
-    if (more) more.innerHTML = links.filter(function (x) { return x !== slug; }).map(function (x) { return '<a class="chip" href="policy.html?p=' + x + '">' + titles[x] + '</a>'; }).join('');
+    if (more) more.innerHTML = links.filter(function (x) { return x !== slug; }).map(function (x) { return '<a class="chip" href="/policy?p=' + x + '">' + titles[x] + '</a>'; }).join('');
     document.title = pol.title + ' | Ananta Beauty';
   }
 
@@ -262,11 +262,11 @@
     var img1 = p.images[0] || '', img2 = p.images[1] || '';
     var out = !p.inStock;
     return '<article class="pcard reveal d' + (i % 3) + '">' +
-      '<a class="thumb" href="product.html?slug=' + esc(p.slug) + '" tabindex="-1" aria-hidden="true">' +
+      '<a class="thumb" href="/product?slug=' + esc(p.slug) + '" tabindex="-1" aria-hidden="true">' +
       '<img src="' + esc(img1) + '" alt="" loading="lazy">' +
       (img2 && img2 !== img1 ? '<img class="alt" src="' + esc(img2) + '" alt="" loading="lazy">' : '') +
       '<span class="badge' + (out ? ' out' : '') + '">' + (out ? 'Sold out' : esc(CATLABEL[p.category] || '')) + '</span></a>' +
-      '<div class="body"><h3><a href="product.html?slug=' + esc(p.slug) + '">' + esc(p.name) + '</a></h3>' +
+      '<div class="body"><h3><a href="/product?slug=' + esc(p.slug) + '">' + esc(p.name) + '</a></h3>' +
       '<p class="short">' + esc(p.shortDesc) + '</p>' +
       '<div class="row"><div class="price">' + rupees(p.price) + (p.compareAt ? ' <s>' + rupees(p.compareAt) + '</s>' : '') + '</div>' +
       '<button class="add-quick" type="button" data-add="' + esc(p.id) + '"' + (out ? ' disabled' : '') + '>' + (out ? 'Sold out' : 'Add to bag') + '</button></div></div></article>';
@@ -294,10 +294,10 @@
       S.catalog = r.body.products || S.catalog || [];
       var list = r.body.products || [];
       count.textContent = list.length + (list.length === 1 ? ' product' : ' products');
-      grid.innerHTML = list.length ? list.map(productCard).join('') : '<div class="empty" style="grid-column:1/-1">Nothing matches that yet. Try another ingredient, or <a href="shop.html">clear the filters</a>.</div>';
+      grid.innerHTML = list.length ? list.map(productCard).join('') : '<div class="empty" style="grid-column:1/-1">Nothing matches that yet. Try another ingredient, or <a href="/shop">clear the filters</a>.</div>';
       initReveal(grid);
       var p = new URLSearchParams(); if (state.cat !== 'all') p.set('cat', state.cat); if (state.q) p.set('q', state.q); if (state.sort !== 'featured') p.set('sort', state.sort);
-      history.replaceState(null, '', 'shop.html' + (p.toString() ? '?' + p.toString() : ''));
+      history.replaceState(null, '', '/shop' + (p.toString() ? '?' + p.toString() : ''));
     }
     chips.forEach(function (c) { c.addEventListener('click', function () { state.cat = c.dataset.cat; chips.forEach(function (x) { x.setAttribute('aria-pressed', x === c ? 'true' : 'false'); }); load(); }); });
     q.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { state.q = q.value.trim(); load(); }, 220); });
@@ -308,7 +308,7 @@
   async function renderProduct() {
     var slug = qs('slug'), root = $('#pd');
     var r = await api('GET', '/products/' + encodeURIComponent(slug));
-    if (r.status !== 200) { root.innerHTML = '<div class="empty" style="grid-column:1/-1">We could not find that product. <a href="shop.html">Back to the shop</a>.</div>'; return; }
+    if (r.status !== 200) { root.innerHTML = '<div class="empty" style="grid-column:1/-1">We could not find that product. <a href="/shop">Back to the shop</a>.</div>'; return; }
     var p = r.body.product;
     document.title = p.name + ' | Ananta Beauty';
     $('#crumb').textContent = p.name;
@@ -333,7 +333,7 @@
       '<div class="desc-body"><p>' + esc(p.description || p.shortDesc) + '</p></div>' +
       '<div class="acc">' +
       '<details open><summary>Directions</summary><p>Follow the directions printed on the pack. This page does not add to them.</p></details>' +
-      '<details><summary>Shipping and returns</summary><p>Shipping is a flat ' + rupees(CFG.shipping.flat) + ' on orders under ' + rupees(CFG.shipping.freeOver) + ', and free above that. ' + esc(CFG.shipping.note || '') + ' Return policy: <a href="policy.html?p=returns">read the returns policy</a>.</p></details>' +
+      '<details><summary>Shipping and returns</summary><p>Shipping is a flat ' + rupees(CFG.shipping.flat) + ' on orders under ' + rupees(CFG.shipping.freeOver) + ', and free above that. ' + esc(CFG.shipping.note || '') + ' Return policy: <a href="/policy?p=returns">read the returns policy</a>.</p></details>' +
       '</div></div>';
     root.classList.add('pd');
     // gallery
@@ -348,7 +348,7 @@
     $('#inc', root).addEventListener('click', function () { qty = Math.min(20, qty + 1); $('#qty', root).textContent = qty; });
     $('#add', root).addEventListener('click', function () { addToCart(p.id, qty); });
     $('#wish', root).addEventListener('click', async function () {
-      if (!localStorage.getItem(KEY_TOKEN)) { location.href = 'login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search); return; }
+      if (!localStorage.getItem(KEY_TOKEN)) { location.href = '/login?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search); return; }
       var w = await api('POST', '/me/wishlist', { productId: p.id });
       toast(w.status === 200 ? 'Saved to your wishlist' : (w.body.error || 'Could not save that right now'));
     });
@@ -359,7 +359,7 @@
 
   // ---------- cart + checkout
   function lineHtml(l) {
-    return '<div class="line"><img src="' + esc(l.image) + '" alt=""><div><h3><a href="product.html?slug=' + esc(l.slug) + '">' + esc(l.name) + '</a></h3>' +
+    return '<div class="line"><img src="' + esc(l.image) + '" alt=""><div><h3><a href="/product?slug=' + esc(l.slug) + '">' + esc(l.name) + '</a></h3>' +
       '<div class="sub">' + rupees(l.unitPrice) + ' each' + (l.inStock ? '' : ' &middot; <span style="color:var(--danger)">not enough stock, please lower the quantity</span>') + '</div></div>' +
       '<div class="right"><strong>' + rupees(l.lineTotal) + '</strong><div class="qty" role="group" aria-label="Quantity for ' + esc(l.name) + '"><button type="button" data-dec="' + esc(l.productId) + '" aria-label="One less">&minus;</button><output>' + l.qty + '</output><button type="button" data-inc="' + esc(l.productId) + '" aria-label="One more">+</button></div>' +
       '<button class="linkbtn" type="button" data-rm="' + esc(l.productId) + '">Remove</button></div></div>';
@@ -380,7 +380,7 @@
     var root = $('#cart-root');
     var c = getCart();
     if (!c.length) {
-      root.innerHTML = '<div class="panel" style="grid-column:1/-1;text-align:center;padding:50px"><h2>Your bag is empty</h2><p class="lead" style="margin:10px auto 24px">The range is all in the shop. Start with the problem you want solved.</p><a class="btn" href="shop.html">Go to the shop</a></div>';
+      root.innerHTML = '<div class="panel" style="grid-column:1/-1;text-align:center;padding:50px"><h2>Your bag is empty</h2><p class="lead" style="margin:10px auto 24px">The range is all in the shop. Start with the problem you want solved.</p><a class="btn" href="/shop">Go to the shop</a></div>';
       return;
     }
     var coupon = localStorage.getItem(KEY_COUPON) || '';
@@ -394,7 +394,7 @@
       '<div class="panel" id="lines">' + q.lines.map(lineHtml).join('') + '</div>' +
       '<aside class="panel summary" style="position:sticky;top:110px"><h2 style="font-size:1.5rem">Summary</h2>' +
       couponBox(coupon, msg, kind) + '<div style="height:14px"></div>' + totalsHtml(q) +
-      '<a class="btn" href="checkout.html" style="width:100%;margin-top:6px"' + (q.lines.some(function (l) { return !l.inStock; }) ? ' aria-disabled="true"' : '') + '>Checkout <span class="arrow" aria-hidden="true">&rarr;</span></a>' +
+      '<a class="btn" href="/checkout" style="width:100%;margin-top:6px"' + (q.lines.some(function (l) { return !l.inStock; }) ? ' aria-disabled="true"' : '') + '>Checkout <span class="arrow" aria-hidden="true">&rarr;</span></a>' +
       '<p class="muted" style="font-size:.85rem;margin:14px 0 0">Free shipping on ' + rupees(CFG.shipping.freeOver) + ' and above. ' + esc(CFG.shipping.note || '') + '</p></aside>';
         $('#coupon-form').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -429,7 +429,7 @@
   async function renderCheckout() {
     var root = $('#checkout-root');
     var c = getCart();
-    if (!c.length) { location.href = 'cart.html'; return; }
+    if (!c.length) { location.href = '/cart'; return; }
     var me = null;
     if (localStorage.getItem(KEY_TOKEN)) { var m = await api('GET', '/me'); if (m.status === 200) me = m.body.user; }
     if (!me) { authGate(root, 'Sign in or create an account to place your order. Your bag is saved.', function () { renderCheckout(); }); return; }
@@ -456,11 +456,11 @@
       '<label class="pay-opt"><input type="radio" name="pay" value="cod"' + (CFG.payments.online ? '' : ' checked') + '><span><b>Pay on delivery</b><small>Pay the courier in cash or UPI when the order arrives.</small></span></label>' +
       '<div class="err" role="alert" id="checkout-err"></div>' +
       '<button class="btn" type="submit" id="place"' + (q.lines.some(function (l) { return !l.inStock; }) ? ' disabled' : '') + '>Place order &middot; ' + rupees(q.total) + '</button>' +
-      '<p class="muted" style="font-size:.85rem;margin:0">By placing the order you agree to our <a href="policy.html?p=terms">terms</a> and <a href="policy.html?p=returns">returns policy</a>.</p>' +
+      '<p class="muted" style="font-size:.85rem;margin:0">By placing the order you agree to our <a href="/policy?p=terms">terms</a> and <a href="/policy?p=returns">returns policy</a>.</p>' +
       '</form>' +
       '<aside class="panel summary" style="position:sticky;top:110px"><h2 style="font-size:1.5rem">Your order</h2>' +
       q.lines.map(function (l) { return '<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><img src="' + esc(l.image) + '" alt="" style="width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--blush-2)"><div style="flex:1;font-size:.92rem"><b>' + esc(l.name) + '</b><div class="muted">Qty ' + l.qty + '</div></div><strong>' + rupees(l.lineTotal) + '</strong></div>'; }).join('') +
-      '<div class="divider" style="margin:14px 0"></div>' + couponBox(coupon, q.couponMessage, q.coupon ? 'ok' : (coupon ? 'bad' : '')) + '<div style="height:12px"></div>' + totalsHtml(q) + '<p class="muted" style="font-size:.85rem"><a href="cart.html">Edit your bag</a></p></aside>';
+      '<div class="divider" style="margin:14px 0"></div>' + couponBox(coupon, q.couponMessage, q.coupon ? 'ok' : (coupon ? 'bad' : '')) + '<div style="height:12px"></div>' + totalsHtml(q) + '<p class="muted" style="font-size:.85rem"><a href="/cart">Edit your bag</a></p></aside>';
 
     if (addrs.length) $('#saved').addEventListener('change', function () {
       var v = this.value; var a = addrs.find(function (x) { return x.id === v; }) || {};
@@ -496,7 +496,7 @@
         if (!res.paid) { err.textContent = res.message; btn.disabled = false; btn.textContent = 'Place order \u00b7 ' + rupees(q.total); return; }
       }
       setCart([]); localStorage.removeItem(KEY_COUPON);
-      var dest = 'order.html?id=' + encodeURIComponent(o.id) + (r.body.guestToken ? '&key=' + encodeURIComponent(r.body.guestToken) : '&email=' + encodeURIComponent(fd.email)) + '&new=1';
+      var dest = '/order?id=' + encodeURIComponent(o.id) + (r.body.guestToken ? '&key=' + encodeURIComponent(r.body.guestToken) : '&email=' + encodeURIComponent(fd.email)) + '&new=1';
       location.href = dest;
     });
   }
@@ -509,7 +509,7 @@
     var root = $('#order-root'), id = qs('id');
     var params = qs('key') ? '?key=' + encodeURIComponent(qs('key')) : (qs('email') ? '?email=' + encodeURIComponent(qs('email')) : '');
     var r = await api('GET', '/orders/' + encodeURIComponent(id) + params);
-    if (r.status !== 200) { root.innerHTML = '<div class="empty">We could not find that order. <a href="dashboard.html">Check My account</a> if you are signed in.</div>'; return; }
+    if (r.status !== 200) { root.innerHTML = '<div class="empty">We could not find that order. <a href="/dashboard">Check My account</a> if you are signed in.</div>'; return; }
     var o = r.body.order, STAGES = ['placed', 'packed', 'shipped', 'delivered'];
     var idx = STAGES.indexOf(o.status);
     var isNew = qs('new') === '1';
@@ -525,7 +525,7 @@
       '<div class="summary" style="margin-top:18px;max-width:420px;margin-left:auto">' + totalsHtml(o) + '</div>' +
       '<div class="two" style="margin-top:20px"><div class="card" style="padding:20px"><b>Delivering to</b><p style="margin:6px 0 0">' + esc(o.address.name) + '<br>' + esc(o.address.line1) + (o.address.line2 ? ', ' + esc(o.address.line2) : '') + '<br>' + esc(o.address.city) + ', ' + esc(o.address.state) + ' ' + esc(o.address.pincode) + '</p></div>' +
       '<div class="card" style="padding:20px"><b>Payment</b><p style="margin:6px 0 0">' + payLabel(o) + '</p>' + (o.paymentStatus === 'awaiting_payment' && o.status !== 'cancelled' ? '<button class="btn small" type="button" id="paynow" style="margin-top:10px">Pay ' + rupees(o.total) + ' now</button>' : '') + '<p class="muted" style="margin:6px 0 0;font-size:.88rem">Placed ' + new Date(o.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) + '</p></div></div>' +
-      '<div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="shop.html">Keep shopping</a>' + (localStorage.getItem(KEY_TOKEN) ? '<a class="btn ghost" href="dashboard.html">My orders</a>' : '') + '</div></div>';
+      '<div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/shop">Keep shopping</a>' + (localStorage.getItem(KEY_TOKEN) ? '<a class="btn ghost" href="/dashboard">My orders</a>' : '') + '</div></div>';
     var pn = $('#paynow');
     if (pn) pn.addEventListener('click', async function () {
       pn.disabled = true;
@@ -540,7 +540,7 @@
   // ---------- auth
   function initAuth() {
     var tabs = $$('.auth .tabs button'), lf = $('#login-form'), rf = $('#register-form');
-    var next = qs('next') || 'dashboard.html';
+    var next = qs('next') || '/dashboard';
     tabs.forEach(function (t) { t.addEventListener('click', function () {
       tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
       lf.hidden = t.dataset.tab !== 'login'; rf.hidden = t.dataset.tab !== 'register';
@@ -594,8 +594,8 @@
       panel.innerHTML = '<div class="tab-panel"><h2 style="font-size:1.6rem">Your orders</h2>' + (list.length ? list.map(function (o) {
         return '<article class="order-card reveal in"><div class="top"><div><b>' + esc(o.id) + '</b> <span class="muted" style="font-size:.88rem">&middot; ' + new Date(o.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) + '</span></div><span class="status-pill ' + esc(o.status) + '">' + esc(o.status) + '</span></div>' +
           '<div class="thumbs">' + o.items.map(function (l) { return '<img src="' + esc(l.image) + '" alt="" title="' + esc(l.name) + '">'; }).join('') + '</div>' +
-          '<div class="top"><span>' + o.items.reduce(function (s, l) { return s + l.qty; }, 0) + ' item(s) &middot; <strong>' + rupees(o.total) + '</strong></span><a class="link-arrow" href="order.html?id=' + esc(o.id) + '">Details <span aria-hidden="true">&rarr;</span></a></div></article>';
-      }).join('') : '<div class="empty">No orders yet. <a href="shop.html">Find your first routine</a>.</div>') + '</div>';
+          '<div class="top"><span>' + o.items.reduce(function (s, l) { return s + l.qty; }, 0) + ' item(s) &middot; <strong>' + rupees(o.total) + '</strong></span><a class="link-arrow" href="/order?id=' + esc(o.id) + '">Details <span aria-hidden="true">&rarr;</span></a></div></article>';
+      }).join('') : '<div class="empty">No orders yet. <a href="/shop">Find your first routine</a>.</div>') + '</div>';
     }
     async function addressesTab() {
       var mm = await api('GET', '/me'); var addrs = mm.body.user.addresses || [];
@@ -646,7 +646,7 @@
         if (r.status !== 200) { $('#prof-err').textContent = r.body.error; return; }
         $('#hello').textContent = 'Hi, ' + r.body.user.name.split(' ')[0]; toast('Profile saved');
       });
-      $('#logout').addEventListener('click', async function () { await api('POST', '/auth/logout'); setSession(''); location.href = 'index.html'; });
+      $('#logout').addEventListener('click', async function () { await api('POST', '/auth/logout'); setSession(''); location.href = '/'; });
     }
     show('orders');
   }
