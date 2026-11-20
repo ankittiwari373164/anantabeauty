@@ -1,0 +1,34 @@
+{
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/admin/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/keepalive",
+      "destination": "/api/keepalive"
+    },
+    {
+      "source": "/api/razorpay-webhook",
+      "destination": "/api/razorpay-webhook"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/main?__path=:path*"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "17 3 * * *"
+    }
+  ],
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 15
+    }
+  }
+}

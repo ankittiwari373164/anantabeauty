@@ -1,0 +1,23 @@
+# Backup keep-alive for the free Supabase project (the main one is the daily Vercel Cron).
+# Runs every 2 days and writes one heartbeat row straight to Supabase.
+# Needs two repository secrets: SUPABASE_URL and SUPABASE_SECRET_KEY
+# (GitHub repo > Settings > Secrets and variables > Actions > New repository secret).
+name: Supabase keep-alive
+on:
+  schedule:
+    - cron: "23 4 */2 * *"
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write heartbeat
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          code=$(curl -s -o out.txt -w "%{http_code}" -X POST "$SUPABASE_URL/rest/v1/rpc/app_heartbeat" \
+            -H "apikey: $SUPABASE_SECRET_KEY" -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+            -H "Content-Type: application/json" -d '{"p_source":"github-action"}')
+          cat out.txt; echo
+          test "$code" = "200"

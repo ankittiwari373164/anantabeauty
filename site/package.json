@@ -1,0 +1,10 @@
+{
+  "name": "ananta-beauty-store",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Ananta Beauty store: static storefront and admin on Vercel, data in Supabase",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@supabase/supabase-js": "2.45.4"
+  }
+}
